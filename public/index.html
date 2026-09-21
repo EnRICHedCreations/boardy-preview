@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Boardy Tetris</title>
+<style>
+*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;background:#0b1020;color:#f8fafc;font-family:system-ui,sans-serif}.wrap{display:flex;gap:24px;align-items:flex-start;padding:24px}.game{position:relative}canvas{background:#070b14;border:2px solid #334155;border-radius:8px;display:block}.side{width:170px}h1{margin:0 0 16px;font-size:28px}.card{background:#151c2f;border:1px solid #334155;border-radius:10px;padding:14px;margin-bottom:12px}.label{color:#94a3b8;font-size:12px;text-transform:uppercase}.value{font-size:24px;font-weight:700}.controls{font-size:13px;line-height:1.8;color:#cbd5e1}button{width:100%;padding:10px;border:0;border-radius:8px;font-weight:700;cursor:pointer}.overlay{position:absolute;inset:0;display:none;place-items:center;background:#0009;text-align:center;font-size:28px;font-weight:800;border-radius:8px}.overlay.show{display:grid}@media(max-width:560px){.wrap{gap:12px;padding:12px}.side{width:125px}canvas{width:240px;height:480px}h1{font-size:21px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+ <div class="game"><canvas id="game" width="300" height="600"></canvas><div id="over" class="overlay">GAME OVER</div></div>
+ <aside class="side"><h1>Boardy Tetris</h1>
+  <div class="card"><div class="label">Score</div><div id="score" class="value">0</div></div>
+  <div class="card"><div class="label">Lines</div><div id="lines" class="value">0</div></div>
+  <div class="card controls">← → Move<br>↓ Soft drop<br>↑ Rotate<br>Space Hard drop<br>P Pause</div>
+  <button id="restart">New Game</button>
+ </aside>
+</div>
+<script>
+const c=document.getElementById('game'),x=c.getContext('2d'),scoreEl=document.getElementById('score'),linesEl=document.getElementById('lines'),over=document.getElementById('over');
+const W=10,H=20,S=30,colors=['','#38bdf8','#facc15','#a78bfa','#4ade80','#fb7185','#60a5fa','#fb923c'];
+const shapes=[
+ [[1,1,1,1]],[[2,2],[2,2]],[[0,3,0],[3,3,3]],[[0,4,4],[4,4,0]],[[5,5,0],[0,5,5]],[[6,0,0],[6,6,6]],[[0,0,7],[7,7,7]]
+];
+let board,piece,score,lines,last,drop,paused,ended;
+function reset(){board=Array.from({length:H},()=>Array(W).fill(0));score=lines=0;last=0;drop=650;paused=ended=false;over.classList.remove('show');spawn();ui()}
+function spawn(){let i=Math.floor(Math.random()*shapes.length);piece={m:shapes[i].map(r=>r.slice()),x:Math.floor((W-shapes[i][0].length)/2),y:0,id:i+1};if(collide(piece.x,piece.y,piece.m)){ended=true;over.classList.add('show')}}
+function collide(px,py,m){for(let y=0;y<m.length;y++)for(let z=0;z<m[y].length;z++)if(m[y][z]){let nx=px+z,ny=py+y;if(nx<0||nx>=W||ny>=H||(ny>=0&&board[ny][nx]))return true}return false}
+function merge(){piece.m.forEach((r,y)=>r.forEach((v,z)=>{if(v&&piece.y+y>=0)board[piece.y+y][piece.x+z]=piece.id}));clearLines();spawn()}
+function clearLines(){let n=0;outer:for(let y=H-1;y>=0;y--){for(let z=0;z<W;z++)if(!board[y][z])continue outer;board.splice(y,1);board.unshift(Array(W).fill(0));n++;y++}if(n){lines+=n;score+=[0,100,300,500,800][n];drop=Math.max(120,650-Math.floor(lines/10)*60);ui()}}
+function move(dx){if(!collide(piece.x+dx,piece.y,piece.m))piece.x+=dx}
+function down(){if(!collide(piece.x,piece.y+1,piece.m)){piece.y++;return true}merge();return false}
+function rotate(){let m=piece.m[0].map((_,i)=>piece.m.map(r=>r[i]).reverse());for(const k of [0,-1,1,-2,2])if(!collide(piece.x+k,piece.y,m)){piece.x+=k;piece.m=m;break}}
+function hard(){let d=0;while(down()){d++;if(ended)break}score+=d*2;ui()}
+function ui(){scoreEl.textContent=score;linesEl.textContent=lines}
+function drawCell(px,py,id){x.fillStyle=colors[id];x.fillRect(px*S+1,py*S+1,S-2,S-2);x.fillStyle='#ffffff25';x.fillRect(px*S+3,py*S+3,S-6,4)}
+function draw(){x.fillStyle='#070b14';x.fillRect(0,0,c.width,c.height);board.forEach((r,y)=>r.forEach((v,z)=>v&&drawCell(z,y,v)));if(piece&&!ended)piece.m.forEach((r,y)=>r.forEach((v,z)=>v&&drawCell(piece.x+z,piece.y+y,piece.id)))}
+function loop(t=0){if(!paused&&!ended&&t-last>drop){down();last=t}draw();requestAnimationFrame(loop)}
+addEventListener('keydown',e=>{if(ended)return;if(['ArrowLeft','ArrowRight','ArrowDown','ArrowUp',' '].includes(e.key))e.preventDefault();if(e.key==='p'||e.key==='P')paused=!paused;if(paused)return;if(e.key==='ArrowLeft')move(-1);if(e.key==='ArrowRight')move(1);if(e.key==='ArrowDown'){down();score++;ui()}if(e.key==='ArrowUp')rotate();if(e.key===' ')hard()});
+document.getElementById('restart').onclick=reset;reset();loop();
+</script>
+</body></html>
