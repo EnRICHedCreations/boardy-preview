@@ -2,9 +2,6 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
-// Intentional breaking change for recovery test: this module does not exist.
-require('./missing-runtime-module');
-
 const port = Number(process.env.PORT || 3000);
 const publicDir = path.join(__dirname, 'public');
 const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8' };
