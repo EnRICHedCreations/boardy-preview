@@ -1,0 +1,12 @@
+{
+  "name": "boardy-preview-tetris",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Simple browser Tetris served by Node.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
